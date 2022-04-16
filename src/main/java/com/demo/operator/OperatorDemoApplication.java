@@ -63,6 +63,12 @@ public class OperatorDemoApplication {
     System.out.println("********** transform Demo **********");
     Flux.range(1, 5).transform(Utils.userFilter()).subscribe(Utils.subscriber());
 
+    System.out.println("********** repeat Demo **********");
+    Utils.getIntegers().repeat(1).subscribe(Utils.subscriber());
+
+    System.out.println("********** retry Demo **********");
+    Utils.getIntegersWithErrors().retry(1).subscribe(Utils.subscriber());
+
   }
 
 }
