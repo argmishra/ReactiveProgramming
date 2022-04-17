@@ -2,6 +2,7 @@ package com.demo.mono;
 
 import com.demo.util.Utils;
 import java.util.stream.Stream;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 public class MonoDemoApplication {
@@ -63,8 +64,19 @@ public class MonoDemoApplication {
     Mono.fromRunnable(runnable).subscribe(Utils.onNext(),
         Utils.onError(),
         Utils.onComplete());
+
+    System.out.println("********** map Demo **********");
+    Mono.just("Anurag").map(s -> s.toLowerCase()).subscribe(Utils.onNext(), Utils.onError(), Utils.onComplete());
+
+    System.out.println("********** flatMap Demo **********");
+    Mono.just("Anurag").flatMap(s -> split(s)).subscribe(Utils.onNext(), Utils.onError(), Utils.onComplete());
+
   }
 
+
+  private static  Mono<String> split(String name) {
+    return Mono.just(name.concat( " Mishra"));
+  }
 
   private static Mono<String> userRepo(int userId) {
     if (userId == 1) {
@@ -76,5 +88,7 @@ public class MonoDemoApplication {
     }
 
   }
+
+
 
 }

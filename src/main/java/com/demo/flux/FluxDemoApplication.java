@@ -40,6 +40,12 @@ public class FluxDemoApplication {
     System.out.println("********** Range Demo **********");
     Flux.range(1, 10).map(i -> Utils.faker().name().firstName()).subscribe(Utils.onNext());
 
+    System.out.println("********** flatMap Demo **********");
+    Flux.fromIterable(stringList).flatMap(s -> split(s)).subscribe(Utils.onNext(), Utils.onError(), Utils.onComplete());
+
+    System.out.println("********** concatMap Demo **********");
+    Flux.fromIterable(stringList).concatMap(s -> split(s)).subscribe(Utils.onNext(), Utils.onError(), Utils.onComplete());
+
     System.out.println("********** log Demo **********");
     Flux.range(1, 2).log().subscribe(Utils.onNext());
 
@@ -73,5 +79,12 @@ public class FluxDemoApplication {
     Flux.interval(Duration.ofSeconds(1)).subscribe(Utils.onNext());
     Thread.sleep(3000);
 
+
+
+
+  }
+
+  private static  Flux<String> split(String name) {
+return Flux.fromArray(name.split(""));
   }
 }

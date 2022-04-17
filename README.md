@@ -20,14 +20,17 @@ onError, onComplete.
 
 5. **Flux** - It is a publisher which allows to emit only zero or more values.
 
-5. **Sinks** - It acts as both Publisher and Subscriber.
+6. **Sinks** - It acts as both Publisher and Subscriber and has single inbound channel.
+
+6. **Processor** - It acts as both Publisher and Subscriber and has both inbound and outbound channel.
 
 ## LifeCycle
 1. Subscriber wants to connect to Publisher using subscribe().
-2. Publisher calls onSubscribe to hand over Subscription object to Subscriber.
-3. Publisher pushed data via onNext() for every emit.
-4. Publisher have no more data to publish then it calls onComplete().
-5. In case of any error in this process, onError() is called to notify Subscriber.
+2. Publisher calls onSubscribe() to hand over Subscription object to Subscriber.
+3. Subscriber request() calls Publisher to request for data.
+4. Publisher pushed data via onNext() for every emit.
+5. Publisher have no more data to publish then it calls onComplete().
+6. In case of any error in this process, onError() is called to notify Subscriber.
 
 ## Back Pressure Or Overflow Strategy 
 1. buffer = Keep in memory
