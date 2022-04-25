@@ -1,48 +1,107 @@
 package com.demo.pratice;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.anyLong;
+import static org.mockito.Mockito.isA;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.test.StepVerifier;
 
+@ExtendWith(MockitoExtension.class)
 public class ReactiveDemoApplicationTest {
 
-  private final MovieInfoService movieInfoService = new MovieInfoService();
-  private final ReviewService reviewService = new ReviewService();
-  ReactiveDemoApplication reactiveDemoApplication =
-      new ReactiveDemoApplication(movieInfoService, reviewService);
+  @InjectMocks
+  ReactiveDemoApplication reactiveMovieService;
+  @Mock
+  private MovieInfoService movieInfoService;
+  @Mock
+  private ReviewService reviewService;
 
   @Test
-  public void testGetAllMovies() {
-    var moviesFlux = reactiveDemoApplication.getAllMovies();
+  void getAllMovies() {
+    Mockito.when(movieInfoService.retrieveMoviesFlux())
+        .thenCallRealMethod();
 
-    StepVerifier.create(moviesFlux).assertNext(movie -> {
-      assertEquals(movie.getMovie().getName(), "Batman Begins");
-      assertEquals(movie.getReviewList(), 2);
-    }).assertNext(movie -> {
-      assertEquals(movie.getMovie().getName(), "The Dark Knight");
-      assertEquals(movie.getReviewList(), 2);
-    });
+    Mockito.when(reviewService.retrieveReviewsFlux(anyLong()))
+        .thenCallRealMethod();
+
+    var moviesFlux = reactiveMovieService.getAllMovies();
+
+    StepVerifier.create(moviesFlux)
+        .expectNextCount(3)
+        .verifyComplete();
   }
 
   @Test
-  public void testGetMovieById() {
-    var moviesFlux = reactiveDemoApplication.getMovieById(1);
+  void getAllMovies_exception() {
+    Mockito.when(movieInfoService.retrieveMoviesFlux())
+        .thenCallRealMethod();
 
-    StepVerifier.create(moviesFlux).assertNext(movie -> {
-      assertEquals(movie.getMovie().getName(), "Batman Begins");
-      assertEquals(movie.getReviewList(), 2);
-    });
+    Mockito.when(reviewService.retrieveReviewsFlux(anyLong()))
+        .thenThrow(new RuntimeException("Exception"));
+
+    var moviesFlux = reactiveMovieService.getAllMovies();
+
+    StepVerifier.create(moviesFlux)
+        .expectError(RuntimeException.class)
+        .verify();
   }
 
   @Test
-  public void testGetMovie() {
-    var moviesFlux = reactiveDemoApplication.getMovie(1);
+  void getAllMovies_retry() {
+    Mockito.when(movieInfoService.retrieveMoviesFlux())
+        .thenCallRealMethod();
 
-    StepVerifier.create(moviesFlux).assertNext(movie -> {
-      assertEquals(movie.getMovie().getName(), "Batman Begins");
-      assertEquals(movie.getReviewList(), 2);
-    });
+    Mockito.when(reviewService.retrieveReviewsFlux(anyLong()))
+        .thenThrow(new RuntimeException("Exception"));
+
+    var moviesFlux = reactiveMovieService.getAllMovies_retry();
+
+    StepVerifier.create(moviesFlux)
+        .expectError(RuntimeException.class)
+        .verify();
+
+    verify(reviewService, times(3)).retrieveReviewsFlux(isA(Long.class));
   }
+
+  @Test
+  void getAllMovies_retryWhen() {
+    Mockito.when(movieInfoService.retrieveMoviesFlux())
+        .thenCallRealMethod();
+
+    Mockito.when(reviewService.retrieveReviewsFlux(anyLong()))
+        .thenThrow(new RuntimeException("Exception"));
+
+    var moviesFlux = reactiveMovieService.getAllMovies_retryWhen();
+
+    StepVerifier.create(moviesFlux)
+        .expectError(RuntimeException.class)
+        .verify();
+
+    verify(reviewService, times(3)).retrieveReviewsFlux(isA(Long.class));
+  }
+
+  @Test
+  void getAllMovies_repeat() {
+    Mockito.when(movieInfoService.retrieveMoviesFlux())
+        .thenCallRealMethod();
+
+    Mockito.when(reviewService.retrieveReviewsFlux(anyLong()))
+        .thenCallRealMethod();
+
+    var moviesFlux = reactiveMovieService.getAllMovies_repeat();
+
+    StepVerifier.create(moviesFlux)
+        .expectNextCount(9).verifyComplete();
+
+    verify(reviewService, times(9)).retrieveReviewsFlux(isA(Long.class));
+  }
+
 
 }

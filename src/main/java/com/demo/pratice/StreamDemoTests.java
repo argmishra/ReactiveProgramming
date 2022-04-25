@@ -1,12 +1,20 @@
 package com.demo.pratice;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import java.util.List;
 import org.testng.annotations.Test;
 import reactor.test.StepVerifier;
 
-public class FluxMonoDemoApplicationTest {
+public class StreamDemoTests {
 
-  FluxMonoDemoApplication fluxMonoDemoApplication = new FluxMonoDemoApplication();
+  private final MovieInfoService movieInfoService = new MovieInfoService();
+  private final ReviewService reviewService = new ReviewService();
+  FluxMonoStreamDemo fluxMonoDemoApplication = new FluxMonoStreamDemo();
+  ExceptionHandlingStream exceptionHandlingStream = new ExceptionHandlingStream();
+  ReactiveDemoApplication reactiveDemoApplication =
+      new ReactiveDemoApplication(movieInfoService, reviewService);
+
 
   @Test
   public void testNamesFlux() {
@@ -176,5 +184,106 @@ public class FluxMonoDemoApplicationTest {
 
     StepVerifier.create(namesFlux).expectNext("AD", "BE", "CF").verifyComplete();
     StepVerifier.create(namesFlux).expectNextCount(3).verifyComplete();
+  }
+
+  @Test
+  public void testException_flux() {
+    var namesFlux = exceptionHandlingStream.exception_flux();
+
+    StepVerifier.create(namesFlux).expectNext("A", "B", "C").expectError(RuntimeException.class)
+        .verify();
+  }
+
+  @Test
+  public void testException_flux1() {
+    var namesFlux = exceptionHandlingStream.exception_flux();
+
+    StepVerifier.create(namesFlux).expectNext("A", "B", "C").expectError().verify();
+  }
+
+  @Test
+  public void testException_flux2() {
+    var namesFlux = exceptionHandlingStream.exception_flux();
+
+    StepVerifier.create(namesFlux).expectNext("A", "B", "C").expectErrorMessage("Exception")
+        .verify();
+  }
+
+  @Test
+  public void testOnErrorReturn_flux() {
+    var namesFlux = exceptionHandlingStream.onErrorReturn_flux();
+
+    StepVerifier.create(namesFlux).expectNext("A", "B", "C", "Z", "D", "E", "F").verifyComplete();
+  }
+
+  @Test
+  public void testOnErrorResume_flux() {
+    var namesFlux = exceptionHandlingStream.onErrorResume_flux(new RuntimeException("Exception"));
+
+    StepVerifier.create(namesFlux).expectNext("A", "B", "C", "R", "D", "E", "F").verifyComplete();
+  }
+
+  @Test
+  public void testOnErrorResume_flux1() {
+    var namesFlux =
+        exceptionHandlingStream.onErrorResume_flux(new InterruptedException("Exception"));
+
+    StepVerifier.create(namesFlux).expectNext("A", "B", "C")
+        .expectError(InterruptedException.class).verify();
+  }
+
+  @Test
+  public void testOnErrorContinue_flux() {
+    var namesFlux = exceptionHandlingStream.onErrorContinue_flux();
+
+    StepVerifier.create(namesFlux).expectNext("B", "C", "D", "E", "F").verifyComplete();
+  }
+
+  @Test
+  public void testOnErrorMap_flux() {
+    var namesFlux = exceptionHandlingStream.onErrorMap_flux();
+
+    StepVerifier.create(namesFlux).expectError(ReactorException.class).verify();
+  }
+
+  @Test
+  public void testDoOnError_flux() {
+    var namesFlux = exceptionHandlingStream.doOnError_flux();
+
+    StepVerifier.create(namesFlux).expectNext("A", "B", "C")
+        .expectError(Exception.class).verify();
+  }
+
+  @Test
+  public void testGetAllMovies() {
+    var moviesFlux = reactiveDemoApplication.getAllMovies();
+
+    StepVerifier.create(moviesFlux).assertNext(movie -> {
+      assertEquals(movie.getMovie().getName(), "Batman Begins");
+      assertEquals(movie.getReviewList(), 2);
+    }).assertNext(movie -> {
+      assertEquals(movie.getMovie().getName(), "The Dark Knight");
+      assertEquals(movie.getReviewList(), 2);
+    });
+  }
+
+  @Test
+  public void testGetMovieById() {
+    var moviesFlux = reactiveDemoApplication.getMovieById(1);
+
+    StepVerifier.create(moviesFlux).assertNext(movie -> {
+      assertEquals(movie.getMovie().getName(), "Batman Begins");
+      assertEquals(movie.getReviewList(), 2);
+    });
+  }
+
+  @Test
+  public void testGetMovie() {
+    var moviesFlux = reactiveDemoApplication.getMovie(1);
+
+    StepVerifier.create(moviesFlux).assertNext(movie -> {
+      assertEquals(movie.getMovie().getName(), "Batman Begins");
+      assertEquals(movie.getReviewList(), 2);
+    });
   }
 }

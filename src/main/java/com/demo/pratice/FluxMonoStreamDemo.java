@@ -6,10 +6,10 @@ import java.util.function.Function;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-public class FluxMonoDemoApplication {
+public class FluxMonoStreamDemo {
 
   public static void main(String[] args) throws InterruptedException {
-    FluxMonoDemoApplication fluxMonoDemoApplication = new FluxMonoDemoApplication();
+    FluxMonoStreamDemo fluxMonoDemoApplication = new FluxMonoStreamDemo();
 
     fluxMonoDemoApplication.namesFlux()
         .subscribe(name -> System.out.println("Flux Demo : " + name));
