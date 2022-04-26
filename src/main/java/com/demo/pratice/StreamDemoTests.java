@@ -1,9 +1,15 @@
 package com.demo.pratice;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import org.reactivestreams.Subscription;
 import org.testng.annotations.Test;
+import reactor.core.publisher.BaseSubscriber;
+import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
 public class StreamDemoTests {
@@ -285,5 +291,106 @@ public class StreamDemoTests {
       assertEquals(movie.getMovie().getName(), "Batman Begins");
       assertEquals(movie.getReviewList(), 2);
     });
+  }
+
+  @Test
+  public void testParallel() {
+    var moviesFlux = fluxMonoDemoApplication.parallel();
+
+    StepVerifier.create(moviesFlux).expectNextCount(3).verifyComplete();
+  }
+
+  @Test
+  public void testParallel1() {
+    var moviesFlux = fluxMonoDemoApplication.parallel_demo();
+
+    StepVerifier.create(moviesFlux).expectNextCount(3).verifyComplete();
+  }
+
+  @Test
+  public void testBackPressure() throws InterruptedException {
+    var flux = Flux.range(1, 100);
+
+    CountDownLatch latch = new CountDownLatch(1);
+
+    flux.subscribe(new BaseSubscriber<Integer>() {
+      @Override
+      protected void hookOnSubscribe(Subscription subscription) {
+        request(2);
+      }
+
+      @Override
+      protected void hookOnNext(Integer value) {
+        System.out.println("hookOnNext : " + value);
+        if (value % 2 == 0 || value < 50) {
+          request(2);
+        } else {
+          cancel();
+        }
+      }
+
+      @Override
+      protected void hookOnComplete() {
+        //super.hookOnComplete();
+      }
+
+      @Override
+      protected void hookOnError(Throwable throwable) {
+        //super.hookOnError(throwable);
+      }
+
+      @Override
+      protected void hookOnCancel() {
+        System.out.println("hookOnCancel");
+        latch.countDown();
+      }
+    });
+
+    assertTrue(latch.await(5L, TimeUnit.SECONDS));
+  }
+
+  @Test
+  public void testBackPressure_drop() throws InterruptedException {
+    var flux = Flux.range(1, 100);
+
+    CountDownLatch latch = new CountDownLatch(1);
+
+    flux.onBackpressureDrop(integer -> {
+      System.out.println("onBackpressureDrop : " + integer);
+
+    }).subscribe(new BaseSubscriber<Integer>() {
+      @Override
+      protected void hookOnSubscribe(Subscription subscription) {
+        request(2);
+      }
+
+      @Override
+      protected void hookOnNext(Integer value) {
+        System.out.println("hookOnNext : " + value);
+        if (value % 2 == 0 || value < 50) {
+          request(2);
+        } else {
+          cancel();
+        }
+      }
+
+      @Override
+      protected void hookOnComplete() {
+        //super.hookOnComplete();
+      }
+
+      @Override
+      protected void hookOnError(Throwable throwable) {
+        //super.hookOnError(throwable);
+      }
+
+      @Override
+      protected void hookOnCancel() {
+        System.out.println("hookOnCancel");
+        latch.countDown();
+      }
+    });
+
+    assertTrue(latch.await(5L, TimeUnit.SECONDS));
   }
 }

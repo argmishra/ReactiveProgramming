@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.function.Function;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.ParallelFlux;
+import reactor.core.scheduler.Schedulers;
 
 public class FluxMonoStreamDemo {
 
@@ -76,6 +78,10 @@ public class FluxMonoStreamDemo {
     fluxMonoDemoApplication.zipWith_flux()
         .subscribe(name -> System.out.println("zipWith Flux Demo : " + name));
 
+    // parallel
+    fluxMonoDemoApplication.parallel()
+        .subscribe(name -> System.out.println("parallel Flux Demo : " + name));
+
     // eager merge using static method
     fluxMonoDemoApplication.merge_flux()
         .subscribe(name -> System.out.println("merge Flux Demo : " + name));
@@ -88,6 +94,15 @@ public class FluxMonoStreamDemo {
 
     Thread.sleep(1000);
 
+  }
+
+  public Flux<String> parallel() {
+    return Flux.fromIterable(List.of("A", "B", "C")).map(s -> s.toUpperCase());
+  }
+
+  public ParallelFlux<String> parallel_demo() {
+    return Flux.fromIterable(List.of("A", "B", "C")).parallel().runOn(Schedulers.parallel())
+        .map(s -> s.toUpperCase());
   }
 
   public Flux<String> zipWith_flux() {
